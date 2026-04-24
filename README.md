@@ -76,7 +76,7 @@ npx github:HaSungJe/nestjs-harness-plugin update --dry-run   # 예정 변경만 
 
 ## 더 자세한 워크플로
 
-명령별 상세 규칙·라우팅 구조·커스터마이징 방법은 설치 후 `.harness/README.md` 에 수록.
+하네스 구조와 라우팅 동작은 설치 후 `.harness/README.md`. 명령 추가·제거 등 플러그인 수정 작업은 [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## 제거
 

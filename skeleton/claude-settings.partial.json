@@ -7,7 +7,15 @@
         "hooks": [
           {
             "type": "command",
+            "command": "bash .harness/hooks/on-request-written.sh"
+          },
+          {
+            "type": "command",
             "command": "bash .harness/hooks/on-work-written.sh"
+          },
+          {
+            "type": "command",
+            "command": "bash .harness/hooks/run-tests.sh"
           }
         ]
       }
