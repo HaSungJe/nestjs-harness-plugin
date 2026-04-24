@@ -20,6 +20,9 @@ Thumbs.db
 *.swp
 *.swo
 
+# Claude Code — 머신별 개인 설정
+.claude/settings.local.json
+
 # Build artifacts (none expected, but future-proof)
 dist/
 build/

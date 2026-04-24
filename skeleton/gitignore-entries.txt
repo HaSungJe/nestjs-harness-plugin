@@ -1,3 +1,4 @@
 # 하네스 세션 로컬 상태 파일 — npm init 이 사용자 .gitignore 에 append (중복 체크).
 .harness/.retry-count
 .harness/.current-spec
+.claude/settings.local.json

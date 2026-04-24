@@ -63,7 +63,7 @@ npx github:HaSungJe/harness-nestjs init --force     # 기존 파일 덮어쓰기
 rm -rf .harness/
 # .claude/settings.json 의 harness 항목 제거 (사용자 기존 설정은 보존)
 # .husky/pre-commit 의 # === harness-block-start === ~ === harness-block-end === 블록 제거
-# .gitignore 의 .harness/.retry-count, .harness/.current-spec 라인 제거
+# .gitignore 의 .harness/.retry-count, .harness/.current-spec, .claude/settings.local.json 라인 제거
 ```
 
 자동 제거 명령은 추후 지원 예정.
