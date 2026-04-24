@@ -38,7 +38,7 @@ npx github:HaSungJe/nestjs-harness-plugin init
 | 항목 | 경로 | 역할 |
 |---|---|---|
 | 하네스 워크플로 | `.harness/` | request/work 스펙 · validator · hook 스크립트 · 템플릿 |
-| 프로젝트 규칙 샘플 | `.harness/samples/CLAUDE.md`, `.harness/samples/docs/` | NestJS 11 + TypeORM + BullMQ 기준 코드 컨벤션 예시 (루트 `CLAUDE.md` / `docs/` 에 복사해 커스터마이즈) |
+| 프로젝트 규칙 샘플 | `.harness/samples/CLAUDE.sample.md`, `.harness/samples/docs/` | NestJS 11 + TypeORM + BullMQ 기준 코드 컨벤션 예시. 필요 시 `.sample.` 제거 후 루트에 복사해 커스터마이즈 |
 | Claude Code 훅 | `.claude/settings.json` | work/request 파일 저장 시 validator 자동 실행 |
 | Husky pre-commit | `.husky/pre-commit` | `src/` 또는 `*.spec.ts` 변경 시 `npm test` (회귀 보장) |
 | .gitignore | `.gitignore` | 하네스 세션 로컬 상태 파일 (`.retry-count` 등) 제외 |
@@ -52,6 +52,27 @@ npx github:HaSungJe/nestjs-harness-plugin init             # 기본 동작
 npx github:HaSungJe/nestjs-harness-plugin init --dry-run   # 실제 변경 없이 예정 작업만 출력
 npx github:HaSungJe/nestjs-harness-plugin init --force     # 기존 파일 덮어쓰기 (주의)
 ```
+
+## 업데이트
+
+이미 설치된 프로젝트에 최신 버전을 반영할 때:
+
+```bash
+npx github:HaSungJe/nestjs-harness-plugin update             # 로직 파일만 새 버전으로 교체
+npx github:HaSungJe/nestjs-harness-plugin update --dry-run   # 예정 변경만 확인
+```
+
+`update` 가 하는 일 / 안 하는 일:
+
+| 대상 | 동작 |
+|---|---|
+| `.harness/docs/`, `hooks/`, `templates/`, `validators/`, `samples/` | **전량 삭제 후 재복사** — skeleton 에서 삭제된 파일(orphan) 도 자동 정리 |
+| `.harness/harness-config.json` | **딥 머지** — 사용자 값 보존, 새 필드만 추가 |
+| `.claude/settings.json`, `.husky/pre-commit`, `.gitignore` | 기존 idempotent 머지 재실행 (새 훅·권한·라인 누락분만 추가) |
+| `.harness/output/`, `.harness/memory/` | **절대 건드리지 않음** (사용자 작업물·메모리 보존) |
+| 루트 `CLAUDE.md`, `docs/` | **절대 건드리지 않음** (샘플은 `.harness/samples/` 에만 배치) |
+
+> 캐시 이슈로 최신이 안 받아지면: `npm cache clean --force` 후 재실행.
 
 ## 더 자세한 워크플로
 

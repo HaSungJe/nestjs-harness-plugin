@@ -43,6 +43,12 @@ program
     .option('--skip-install', 'skip npm install step')
     .action(runInit);
 
+program
+    .command('update')
+    .description('Refresh harness logic files (preserves output/, memory/, harness-config.json user values)')
+    .option('-d, --dry-run', 'preview changes without writing')
+    .action(runUpdate);
+
 program.parse();
 
 async function runInit(opts) {
@@ -101,9 +107,124 @@ async function runInit(opts) {
     console.log();
     log.info(c.bold('Next steps'));
     console.log('  1. Restart Claude Code to pick up .claude/settings.json hooks');
-    console.log('  2. ' + c.cyan('Project conventions sample') + ' at ' + c.cyan('.harness/samples/CLAUDE.md') + ' + ' + c.cyan('.harness/samples/docs/') + ' — copy to project root and customize');
-    console.log('  3. Add the routing block to CLAUDE.md — see .harness/README.md §2 (already included in the sample)');
+    console.log('  2. ' + c.cyan('Project conventions sample') + ' at ' + c.cyan('.harness/samples/CLAUDE.sample.md') + ' + ' + c.cyan('.harness/samples/docs/') + ' — strip `.sample.` and copy to project root if needed');
+    console.log('  3. Add the routing block to CLAUDE.md — the sample already includes it under "## 플러그인 설정"');
     console.log('  4. Try ' + c.cyan('"user 도메인 생성"') + ' in Claude Code');
+}
+
+// ─── update command ─────────────────────────────────────────────────────────
+async function runUpdate(opts) {
+    const cwd = process.cwd();
+    const { dryRun = false } = opts;
+
+    log.info(c.bold(`Updating harness in ${cwd}`));
+    if (dryRun) log.warn('dry-run mode — no files will be modified');
+
+    const harnessDir = path.join(cwd, '.harness');
+    if (!(await fs.pathExists(harnessDir))) {
+        log.error('No .harness/ found. Run `init` first.');
+        process.exit(1);
+    }
+
+    const userPkgPath = path.join(cwd, 'package.json');
+    if (!(await fs.pathExists(userPkgPath))) {
+        log.error('No package.json found. Run inside a project root.');
+        process.exit(1);
+    }
+    const userPkg = await fs.readJson(userPkgPath);
+    const projectName = userPkg.name || 'my-project';
+
+    const stats = {added: 0, skipped: 0, merged: 0, removed: 0};
+
+    // 1. Wipe refreshable (plugin-owned) dirs
+    log.info('\n[1/4] Clearing plugin-owned directories...');
+    const refreshables = ['docs', 'hooks', 'templates', 'validators', 'samples'];
+    for (const dir of refreshables) {
+        const p = path.join(harnessDir, dir);
+        if (!(await fs.pathExists(p))) continue;
+        if (!dryRun) await fs.remove(p);
+        log.ok(`cleared .harness/${dir}/`);
+        stats.removed++;
+    }
+
+    // 2. Re-copy skeleton (existing files that weren't wiped are skipped)
+    log.info('\n[2/4] Re-copying skeleton...');
+    await copyHarness(cwd, projectName, {force: false, dryRun, stats});
+
+    // 3. Deep-merge harness-config.json (preserve user values, add new keys)
+    log.info('\n[3/4] Merging harness-config.json (preserve user values, add new keys)...');
+    await mergeHarnessConfig(cwd, projectName, {dryRun, stats});
+
+    // 4. Re-run idempotent merges for settings / husky / gitignore
+    log.info('\n[4/4] Re-applying settings / husky / gitignore merges...');
+    await mergeClaudeSettings(cwd, {dryRun, stats});
+    await mergeHuskyPreCommit(cwd, {dryRun, skipInstall: true, stats});
+    await appendGitignore(cwd, {dryRun, stats});
+
+    // Summary
+    console.log();
+    log.info(c.bold('Updated'));
+    console.log(`  added:    ${c.green(stats.added)}`);
+    console.log(`  removed:  ${c.gray(stats.removed)}`);
+    console.log(`  merged:   ${c.cyan(stats.merged)}`);
+    console.log(`  skipped:  ${c.gray(stats.skipped)}`);
+    console.log();
+    log.info('Preserved: ' + c.cyan('.harness/output/') + ', ' + c.cyan('.harness/memory/') + ', ' + c.cyan('harness-config.json') + ' (user values)');
+}
+
+async function mergeHarnessConfig(cwd, projectName, {dryRun, stats}) {
+    const skelPath = path.join(SKELETON_DIR, '.harness', 'harness-config.json');
+    const skelContent = (await fs.readFile(skelPath, 'utf-8'))
+        .replace(/\{\{PROJECT_NAME\}\}/g, projectName);
+    const skelConfig = JSON.parse(skelContent);
+
+    const destPath = path.join(cwd, '.harness', 'harness-config.json');
+
+    if (!(await fs.pathExists(destPath))) {
+        if (!dryRun) {
+            await fs.ensureDir(path.dirname(destPath));
+            await fs.writeFile(destPath, skelContent);
+        }
+        log.ok('.harness/harness-config.json (created)');
+        stats.added++;
+        return;
+    }
+
+    const userConfig = await fs.readJson(destPath);
+    const merged = deepMergePreservingUser(skelConfig, userConfig);
+
+    if (JSON.stringify(merged) === JSON.stringify(userConfig)) {
+        log.skip('.harness/harness-config.json (already up-to-date)');
+        stats.skipped++;
+        return;
+    }
+
+    if (!dryRun) await fs.writeJson(destPath, merged, {spaces: 2});
+    log.ok('.harness/harness-config.json (new keys merged, user values preserved)');
+    stats.merged++;
+}
+
+// Deep-merge where user values always win.
+// New keys from skel fill in only where user has none.
+function deepMergePreservingUser(skel, user) {
+    if (skel === null || typeof skel !== 'object' || Array.isArray(skel)) {
+        return user !== undefined ? user : skel;
+    }
+    if (user === null || typeof user !== 'object' || Array.isArray(user)) {
+        return user !== undefined ? user : skel;
+    }
+    const result = {};
+    const keys = new Set([...Object.keys(skel), ...Object.keys(user)]);
+    for (const k of keys) {
+        if (k in user && k in skel) {
+            result[k] = deepMergePreservingUser(skel[k], user[k]);
+        } else if (k in user) {
+            result[k] = user[k];
+        } else {
+            result[k] = skel[k];
+        }
+    }
+    return result;
 }
 
 // ─── Step 2: Copy .harness/ ─────────────────────────────────────────────────
