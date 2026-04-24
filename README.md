@@ -40,11 +40,24 @@ npx github:HaSungJe/nestjs-harness-plugin init
 | 하네스 워크플로 | `.harness/` | request/work 스펙 · validator · hook 스크립트 · 템플릿 |
 | 프로젝트 규칙 샘플 | `.harness/samples/starter/CLAUDE.sample.md`, `.harness/samples/starter/docs/` | NestJS 11 + TypeORM + BullMQ 기준 코드 컨벤션 예시. 필요 시 `.sample.` 제거 후 루트에 복사해 커스터마이즈 |
 | 워크플로 예시 | `.harness/samples/workflow/` | 실제 request/work/report 산출물 + 단계별 스크린샷 (읽기 전용 참고) |
+| 커스텀 슬래시 커맨드 | `.claude/commands/harness-init.md` | `/harness-init` — 샘플을 템플릿 삼아 루트 `CLAUDE.md` + `docs/` 자동 생성 |
 | Claude Code 훅 | `.claude/settings.json` | work/request 파일 저장 시 validator 자동 실행 |
 | Husky pre-commit | `.husky/pre-commit` | `src/` 또는 `*.spec.ts` 변경 시 `npm test` (회귀 보장) |
 | .gitignore | `.gitignore` | 하네스 세션 로컬 상태 파일 (`.retry-count` 등) 제외 |
 
 기존 파일이 있으면 **덮어쓰지 않고 merge/append** (중복 체크). `--force` 로 강제 가능.
+
+## 첫 사용 — `CLAUDE.md` 자동 생성
+
+설치 후 Claude Code 에서:
+
+```
+/harness-init
+```
+
+하네스 샘플(`.harness/samples/starter/`) 의 섹션 구조·톤을 템플릿 삼아 루트 `CLAUDE.md` + `docs/` 를 자동 생성합니다. 프로젝트의 실제 스택·디렉터리를 스캔해 샘플의 NestJS/BullMQ 규칙을 실상에 맞게 치환. 기존 파일이 있으면 덮어쓰기 전 확인.
+
+> Claude Code 내장 `/init` 과 별개입니다. 하네스 규약을 따르는 CLAUDE.md 를 만들고 싶을 때 이걸 사용하세요.
 
 ## 옵션
 

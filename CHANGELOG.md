@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.2.0] - 2026-04-24
+
+### Added
+- `/harness-init` 커스텀 슬래시 커맨드 — 하네스 샘플을 템플릿 삼아 루트 `CLAUDE.md` + `docs/` 자동 생성
+- `skeleton/.claude/commands/` 배포 경로 신설
+- CLI: `copyClaudeCommands()` / `wipePluginOwnedCommands()` — 플러그인 소유 커맨드 설치·갱신·제거 (파일명 매칭으로 사용자 추가 커맨드 보존)
+- `init` / `update` / `uninstall` 각 단계 카운터에 `.claude/commands/` 처리 추가
+
+### Changed
+- [README.md](README.md) 설치 항목 표에 커스텀 커맨드 행 추가 + "첫 사용" 섹션 신설
+- [CONTRIBUTING.md](CONTRIBUTING.md) 에 `skeleton/.claude/commands/` merge 규칙 + 새 커맨드 추가 절차 문서화
+
 ## [0.1.0] - 2026-04-24
 
 ### Added

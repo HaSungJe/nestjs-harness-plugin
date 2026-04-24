@@ -105,3 +105,15 @@ index.md 권장 섹션:
 
 - init: 존재 시 skip, 없으면 복사 (`--force` 로 덮어쓰기)
 - update: `docs/` · `hooks/` · `templates/` · `validators/` · `samples/` 는 wipe 후 재복사. `output/` · `memory/` 는 불변
+
+### `skeleton/.claude/commands/*.md` → 사용자 `.claude/commands/*.md`
+
+플러그인이 제공하는 슬래시 커맨드 파일. init/update 로 설치·갱신, uninstall 로 제거.
+
+- init: 존재 시 skip, 없으면 복사 (`--force` 로 덮어쓰기)
+- update: 플러그인 소유 커맨드만 wipe + 재복사 (사용자 추가 커맨드는 절대 안 건드림 — 파일명 매칭)
+- uninstall: 플러그인 소유 커맨드만 제거, 디렉터리 비면 폴더도 삭제
+
+새 슬래시 커맨드 추가 시:
+1. `skeleton/.claude/commands/<name>.md` 생성 (frontmatter `description` 필수)
+2. README.md 에 `/<name>` 사용법 1문단 추가

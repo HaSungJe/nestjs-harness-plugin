@@ -78,24 +78,28 @@ async function runInit(opts) {
     const stats = {added: 0, skipped: 0, merged: 0};
 
     // 2. Copy .harness/
-    log.info('\n[1/5] Copying .harness/ scaffold...');
+    log.info('\n[1/6] Copying .harness/ scaffold...');
     await copyHarness(cwd, projectName, {force, dryRun, stats});
 
     // 3. Merge .claude/settings.json
-    log.info('\n[2/5] Merging .claude/settings.json...');
+    log.info('\n[2/6] Merging .claude/settings.json...');
     await mergeClaudeSettings(cwd, {dryRun, stats});
 
-    // 4. Ensure husky + merge .husky/pre-commit
-    log.info('\n[3/5] Configuring .husky/pre-commit...');
+    // 4. Copy .claude/commands/
+    log.info('\n[3/6] Copying .claude/commands/...');
+    await copyClaudeCommands(cwd, {force, dryRun, stats});
+
+    // 5. Ensure husky + merge .husky/pre-commit
+    log.info('\n[4/6] Configuring .husky/pre-commit...');
     await mergeHuskyPreCommit(cwd, {dryRun, skipInstall, stats});
 
-    // 5. Append .gitignore
-    log.info('\n[4/5] Updating .gitignore...');
+    // 6. Append .gitignore
+    log.info('\n[5/6] Updating .gitignore...');
     await appendGitignore(cwd, {dryRun, stats});
 
-    // 6. Install self as devDependency
+    // 7. Install self as devDependency
     if (!dryRun && !skipInstall) {
-        log.info('\n[5/5] Installing nestjs-harness-plugin as devDependency...');
+        log.info('\n[6/6] Installing nestjs-harness-plugin as devDependency...');
         try {
             await execa('npm', ['install', '-D', PKG_INSTALL_SPEC], {cwd, stdio: 'inherit'});
             log.ok(`${PKG_NAME} added to devDependencies`);
@@ -144,7 +148,7 @@ async function runUpdate(opts) {
     const stats = {added: 0, skipped: 0, merged: 0, removed: 0};
 
     // 1. Wipe refreshable (plugin-owned) dirs
-    log.info('\n[1/4] Clearing plugin-owned directories...');
+    log.info('\n[1/5] Clearing plugin-owned directories...');
     const refreshables = ['docs', 'hooks', 'templates', 'validators', 'samples'];
     for (const dir of refreshables) {
         const p = path.join(harnessDir, dir);
@@ -153,17 +157,23 @@ async function runUpdate(opts) {
         log.ok(`cleared .harness/${dir}/`);
         stats.removed++;
     }
+    // Also wipe plugin-owned .claude/commands/ files
+    await wipePluginOwnedCommands(cwd, {dryRun, stats});
 
     // 2. Re-copy skeleton (existing files that weren't wiped are skipped)
-    log.info('\n[2/4] Re-copying skeleton...');
+    log.info('\n[2/5] Re-copying skeleton...');
     await copyHarness(cwd, projectName, {force: false, dryRun, stats});
 
     // 3. Deep-merge harness-config.json (preserve user values, add new keys)
-    log.info('\n[3/4] Merging harness-config.json (preserve user values, add new keys)...');
+    log.info('\n[3/5] Merging harness-config.json (preserve user values, add new keys)...');
     await mergeHarnessConfig(cwd, projectName, {dryRun, stats});
 
-    // 4. Re-run idempotent merges for settings / husky / gitignore
-    log.info('\n[4/4] Re-applying settings / husky / gitignore merges...');
+    // 4. Re-copy .claude/commands/
+    log.info('\n[4/5] Re-copying .claude/commands/...');
+    await copyClaudeCommands(cwd, {force: false, dryRun, stats});
+
+    // 5. Re-run idempotent merges for settings / husky / gitignore
+    log.info('\n[5/5] Re-applying settings / husky / gitignore merges...');
     await mergeClaudeSettings(cwd, {dryRun, stats});
     await mergeHuskyPreCommit(cwd, {dryRun, skipInstall: true, stats});
     await appendGitignore(cwd, {dryRun, stats});
@@ -252,7 +262,7 @@ async function runUninstall(opts) {
     const stats = {removed: 0, kept: 0};
 
     // 1. .harness/
-    log.info('\n[1/5] Cleaning .harness/...');
+    log.info('\n[1/6] Cleaning .harness/...');
     if (purge) {
         if (!dryRun) await fs.remove(harnessDir);
         log.ok('.harness/ (fully removed)');
@@ -275,19 +285,23 @@ async function runUninstall(opts) {
     }
 
     // 2. .claude/settings.json
-    log.info('\n[2/5] Cleaning .claude/settings.json...');
+    log.info('\n[2/6] Cleaning .claude/settings.json...');
     await removeClaudeSettings(cwd, {dryRun, stats});
 
-    // 3. .husky/pre-commit
-    log.info('\n[3/5] Cleaning .husky/pre-commit...');
+    // 2.5. .claude/commands/ (plugin-owned only)
+    log.info('\n[3/6] Cleaning .claude/commands/...');
+    await wipePluginOwnedCommands(cwd, {dryRun, stats});
+
+    // 4. .husky/pre-commit
+    log.info('\n[4/6] Cleaning .husky/pre-commit...');
     await removeHuskyBlock(cwd, {dryRun, stats});
 
-    // 4. .gitignore
-    log.info('\n[4/5] Cleaning .gitignore...');
+    // 5. .gitignore
+    log.info('\n[5/6] Cleaning .gitignore...');
     await removeGitignoreEntries(cwd, {dryRun, stats});
 
-    // 5. devDependency
-    log.info('\n[5/5] Removing devDependency...');
+    // 6. devDependency
+    log.info('\n[6/6] Removing devDependency...');
     if (!dryRun) {
         try {
             await execa('npm', ['uninstall', PKG_NAME], {cwd, stdio: 'inherit'});
@@ -473,6 +487,60 @@ async function copyHarness(cwd, projectName, {force, dryRun, stats}) {
         await fs.ensureDir(path.join(destDir, 'output', 'request'));
         await fs.ensureDir(path.join(destDir, 'output', 'work'));
         await fs.ensureDir(path.join(destDir, 'output', 'report'));
+    }
+}
+
+// ─── Copy .claude/commands/ ─────────────────────────────────────────────────
+// Copies plugin-owned slash command files. Existing user-owned commands not touched.
+async function copyClaudeCommands(cwd, {force, dryRun, stats}) {
+    const srcDir = path.join(SKELETON_DIR, '.claude', 'commands');
+    if (!(await fs.pathExists(srcDir))) return;
+
+    const destDir = path.join(cwd, '.claude', 'commands');
+    const files = await walk(srcDir);
+
+    for (const absFile of files) {
+        const rel = path.relative(srcDir, absFile).split(path.sep).join('/');
+        const dest = path.join(destDir, rel);
+        const exists = await fs.pathExists(dest);
+
+        if (exists && !force) {
+            log.skip(`.claude/commands/${rel}`);
+            stats.skipped++;
+            continue;
+        }
+
+        if (!dryRun) {
+            await fs.ensureDir(path.dirname(dest));
+            await fs.copy(absFile, dest);
+        }
+        log.ok(`.claude/commands/${rel}`);
+        stats.added++;
+    }
+}
+
+// Remove only commands that this plugin owns (by filename match with skeleton).
+// User-added commands in .claude/commands/ stay untouched.
+async function wipePluginOwnedCommands(cwd, {dryRun, stats}) {
+    const srcDir = path.join(SKELETON_DIR, '.claude', 'commands');
+    if (!(await fs.pathExists(srcDir))) return;
+
+    const destDir = path.join(cwd, '.claude', 'commands');
+    if (!(await fs.pathExists(destDir))) return;
+
+    const ownedFiles = (await walk(srcDir)).map((f) => path.relative(srcDir, f).split(path.sep).join('/'));
+    for (const rel of ownedFiles) {
+        const dest = path.join(destDir, rel);
+        if (!(await fs.pathExists(dest))) continue;
+        if (!dryRun) await fs.remove(dest);
+        log.ok(`.claude/commands/${rel} (removed)`);
+        stats.removed++;
+    }
+
+    // If destDir is empty now, remove it too
+    if (!dryRun) {
+        const remaining = await fs.readdir(destDir).catch(() => []);
+        if (remaining.length === 0) await fs.remove(destDir);
     }
 }
 
