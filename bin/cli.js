@@ -9,6 +9,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const SKELETON_DIR = path.resolve(__dirname, '..', 'skeleton');
 const PKG_NAME = 'nestjs-harness-plugin';
+const PKG_INSTALL_SPEC = 'github:HaSungJe/nestjs-harness-plugin';
 const HARNESS_BLOCK_START = '# === harness-block-start ===';
 const HARNESS_BLOCK_END = '# === harness-block-end ===';
 
@@ -83,11 +84,11 @@ async function runInit(opts) {
     if (!dryRun && !skipInstall) {
         log.info('\n[5/5] Installing nestjs-harness-plugin as devDependency...');
         try {
-            await execa('npm', ['install', '-D', PKG_NAME], {cwd, stdio: 'inherit'});
+            await execa('npm', ['install', '-D', PKG_INSTALL_SPEC], {cwd, stdio: 'inherit'});
             log.ok(`${PKG_NAME} added to devDependencies`);
         } catch (err) {
             log.warn(`npm install failed: ${err.message}`);
-            log.warn(`Run 'npm install -D ${PKG_NAME}' manually.`);
+            log.warn(`Run 'npm install -D ${PKG_INSTALL_SPEC}' manually.`);
         }
     }
 
