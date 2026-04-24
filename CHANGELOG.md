@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.2] - 2026-04-24
+
+### Changed
+- `커밋` / `푸쉬` 명령에 **매번 사용자 확인** 단계 필수화. 이전 세션에서 승인받은 이력이 있어도 매 커밋·푸쉬마다 재확인.
+- commit: 커밋 메시지 + staged 파일 목록을 사용자에게 보여주고 승인 후에만 `git commit` 실행
+- push: 푸쉬될 커밋 목록 + 대상 브랜치 + 작업 디렉터리(worktree/본체) 를 보여주고 승인 후에만 `git push` 실행. `--follow-tags` / force-push 필요 시 별도 승인
+- 워크플로 샘플 파일명 정리 (`workflow-{request,work,report}.md.md` → `workflow-{request,work,report}.md`) + 템플릿 3종 참조 경로 갱신
+
 ## [0.2.1] - 2026-04-24
 
 ### Fixed

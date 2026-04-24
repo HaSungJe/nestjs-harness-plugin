@@ -16,10 +16,22 @@
 
 전제 위반이면 이후 단계 진행 금지.
 
+## ⚠️ 실행 전 사용자 확인 필수
+
+`git push` 를 실제로 실행하기 **직전에** 아래 요약을 사용자에게 보여주고 **명시적 승인** 을 받는다:
+
+- 푸쉬될 커밋 목록 (`git log @{u}..HEAD --oneline` 결과)
+- 대상 브랜치 (`HEAD → origin/<target>`)
+- 현재 작업 디렉터리가 worktree 인지 본체인지
+
+> "위 커밋을 `<target>` 브랜치로 푸쉬합니다. 진행할까요?"
+
+사용자가 명시 승인해야 실제 `git push` 실행. 거부 또는 무응답 상태에서 금지. **해당 세션에서 앞서 푸쉬 승인을 받은 이력이 있어도 매 푸쉬마다 재확인.** tag 를 함께 밀거나(`--follow-tags`) force-push 가 필요한 경우엔 요약에 그 사실을 명시하고 별도 승인.
+
 ## worktree 환경
 
 1. **대상 브랜치 확인** — "어느 브랜치에 머지할까요? (기본: main)" 형태로 사용자에게 반드시 질의. 답변 없이 임의로 진행 금지.
-2. 답변받은 브랜치명을 `<target>` 이라 할 때, worktree 디렉터리에서:
+2. 위 "실행 전 사용자 확인" 통과 후, worktree 디렉터리에서:
    ```bash
    git push origin HEAD:<target>
    ```
@@ -34,4 +46,4 @@
 ## 일반 브랜치 환경
 
 1. 대상 브랜치 동일하게 사용자에게 질의
-2. `git push origin HEAD:<target>` 또는 `git push -u origin <branch>` 후 필요 시 `gh pr create` → PR 머지
+2. "실행 전 사용자 확인" 통과 후, `git push origin HEAD:<target>` 또는 `git push -u origin <branch>` 실행. 필요 시 `gh pr create` → PR 머지 (PR 생성도 별도 확인)
