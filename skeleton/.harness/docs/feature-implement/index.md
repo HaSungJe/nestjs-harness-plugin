@@ -19,6 +19,20 @@
 
 위 네 조건이 모두 만족되지 않으면 **⑤단계 이하로 진입하지 않는다.** 사용자가 "강제로 진행" 을 지시하는 경우에도 어떤 전제가 깨졌는지 먼저 안내한 뒤 승인받고 진행.
 
+## 브랜치 확인·생성 (⑥ 구현 진입 전 필수)
+
+구현 시작 전에 **현재 git 브랜치를 확인**해서 통합 브랜치에 변경이 쌓이는 것을 방지한다.
+
+1. `git branch --show-current` 로 현재 브랜치 확인
+2. **통합 브랜치(`main` / `master` / `develop`) 에 있으면**:
+   - 사용자에게 확인 질문:
+     > "현재 `<current>` 브랜치입니다. `feature/<featureName>` 브랜치를 새로 만들어 거기서 진행할까요? (권장)"
+   - 사용자가 승인 → `git checkout -b feature/<featureName>` 실행 후 ⑤ 진입
+   - 사용자가 거부 → 현재 브랜치에서 진행 (사용자 명시 선택)
+   - 응답 없이 임의로 진행 금지
+3. **이미 feature/bugfix/chore 등 non-integration 브랜치에 있으면**: 그대로 ⑤ 진입. 재확인 불필요.
+4. 브랜치 이름은 기본 `feature/<featureName>` — 사용자가 다른 이름(`fix/<featureName>`, `refactor/<featureName>` 등) 을 선호하면 그 입력 받아 사용.
+
 ## 단계
 
 ```

@@ -1,6 +1,6 @@
 {
   "name": "nestjs-harness-plugin",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "type": "module",
   "description": "Drop-in harness for NestJS — structures AI-assisted feature development via request/work specs",
   "bin": {

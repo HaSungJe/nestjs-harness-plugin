@@ -19,7 +19,7 @@
 | ③ | **사람** | request.md 보완 + 결정사항 답변 후 work 작성 지시 | — |
 | ④ | Claude | `work.md` 작성 → 저장 즉시 validator 자동 실행 | (이어짐) |
 | ⑤ | **사람** | work.md 검토 (사전 구현 항목 있으면 먼저 처리) | `회원가입 작업 시작` |
-| ⑥ | Claude | 전제 검증 → 구현 코드 + `spec.ts` 생성 | (이어짐) |
+| ⑥ | Claude | 전제 검증 → **통합 브랜치면 `feature/<featureName>` 브랜치 생성 확인** → 구현 코드 + `spec.ts` 생성 | (이어짐) |
 | ⑦ | Claude | spec 실행 → 실패 시 자가수복 (최대 10회) | (이어짐) |
 | ⑧ | Claude | 리포트 생성 (`.harness/output/report/<domain>/<feature>-report.md`) | (이어짐) |
 | ⑨ | **사람** | 커밋 → husky 전체 테스트 → 푸쉬 | `커밋해줘` / `푸쉬해줘` |
@@ -35,7 +35,7 @@
 | 명령 | 전제 |
 |---|---|
 | `도메인 생성` · `기능 생성` | 없음 (어느 상태든 진입) |
-| `작업 시작` | `work.md` 존재 + request 결정사항 전부 답변 + 사전 구현 항목 전부 완료(`- [x]`) + validator 통과 |
+| `작업 시작` | `work.md` 존재 + request 결정사항 전부 답변 + 사전 구현 항목 전부 완료(`- [x]`) + validator 통과. 통합 브랜치(main/master/develop) 인 경우 `feature/<featureName>` 브랜치 생성 확인 |
 | `커밋해줘` | `git status` 에 변경분 존재 |
 | `푸쉬해줘` | 원격 대비 ahead 커밋 존재 |
 

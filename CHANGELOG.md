@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.2.1] - 2026-04-24
+
+### Fixed
+- `작업 시작` 시 통합 브랜치(main/master/develop) 에 있으면 `feature/<featureName>` 브랜치 생성 여부를 사용자에게 확인. 이전엔 브랜치 규칙이 없어 main 에 바로 작업이 쌓이는 문제. 이미 non-integration 브랜치면 그대로 진행.
+
 ## [0.2.0] - 2026-04-24
 
 ### Added
