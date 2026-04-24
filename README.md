@@ -38,7 +38,8 @@ npx github:HaSungJe/nestjs-harness-plugin init
 | 항목 | 경로 | 역할 |
 |---|---|---|
 | 하네스 워크플로 | `.harness/` | request/work 스펙 · validator · hook 스크립트 · 템플릿 |
-| 프로젝트 규칙 샘플 | `.harness/samples/CLAUDE.sample.md`, `.harness/samples/docs/` | NestJS 11 + TypeORM + BullMQ 기준 코드 컨벤션 예시. 필요 시 `.sample.` 제거 후 루트에 복사해 커스터마이즈 |
+| 프로젝트 규칙 샘플 | `.harness/samples/starter/CLAUDE.sample.md`, `.harness/samples/starter/docs/` | NestJS 11 + TypeORM + BullMQ 기준 코드 컨벤션 예시. 필요 시 `.sample.` 제거 후 루트에 복사해 커스터마이즈 |
+| 워크플로 예시 | `.harness/samples/workflow/` | 실제 request/work/report 산출물 + 단계별 스크린샷 (읽기 전용 참고) |
 | Claude Code 훅 | `.claude/settings.json` | work/request 파일 저장 시 validator 자동 실행 |
 | Husky pre-commit | `.husky/pre-commit` | `src/` 또는 `*.spec.ts` 변경 시 `npm test` (회귀 보장) |
 | .gitignore | `.gitignore` | 하네스 세션 로컬 상태 파일 (`.retry-count` 등) 제외 |
@@ -81,14 +82,21 @@ npx github:HaSungJe/nestjs-harness-plugin update --dry-run   # 예정 변경만 
 ## 제거
 
 ```bash
-# 수동 제거
-rm -rf .harness/
-# .claude/settings.json 의 harness 항목 제거 (사용자 기존 설정은 보존)
-# .husky/pre-commit 의 # === harness-block-start === ~ === harness-block-end === 블록 제거
-# .gitignore 의 .harness/.retry-count, .harness/.current-spec, .claude/settings.local.json 라인 제거
+npx github:HaSungJe/nestjs-harness-plugin uninstall             # 기본 — 사용자 산출물 보존
+npx github:HaSungJe/nestjs-harness-plugin uninstall --dry-run   # 예정 작업만 확인
+npx github:HaSungJe/nestjs-harness-plugin uninstall --purge     # 산출물 포함 전부 삭제
 ```
 
-자동 제거 명령은 추후 지원 예정.
+`uninstall` 동작:
+
+| 대상 | 기본 | `--purge` |
+|---|---|---|
+| `.harness/docs/`, `hooks/`, `templates/`, `validators/`, `samples/`, `README.md` | 삭제 | 삭제 |
+| `.harness/output/`, `memory/`, `harness-config.json` | **보존** (작업물) | 삭제 |
+| `.claude/settings.json` 의 하네스 훅·권한 | 삭제 (사용자 다른 항목은 유지) | 동일 |
+| `.husky/pre-commit` 의 하네스 블록 | 제거 (다른 훅 있으면 파일 유지, 없으면 파일 삭제) | 동일 |
+| `.gitignore` 의 하네스 라인 | 제거 (사용자 다른 라인 유지) | 동일 |
+| `package.json` devDep `nestjs-harness-plugin` | `npm uninstall` 실행 | 동일 |
 
 ## License
 

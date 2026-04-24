@@ -40,7 +40,7 @@ index.md 권장 섹션:
 
 적절 카테고리가 없으면 섹션 신설.
 
-### ③ `skeleton/.harness/samples/CLAUDE.sample.md` 라우팅 블록에 키워드 1줄 추가
+### ③ `skeleton/.harness/samples/starter/CLAUDE.sample.md` 라우팅 블록에 키워드 1줄 추가
 
 "## 플러그인 설정 > 명령어 라우팅" 아래 bullet 에:
 
@@ -66,7 +66,7 @@ index.md 권장 섹션:
 
 - [ ] `skeleton/.harness/docs/<command>/` 폴더 삭제 또는 rename
 - [ ] `skeleton/.harness/docs/routing.md` 해당 행 삭제 / 수정
-- [ ] `skeleton/.harness/samples/CLAUDE.sample.md` 해당 키워드 bullet 삭제 / 수정
+- [ ] `skeleton/.harness/samples/starter/CLAUDE.sample.md` 해당 키워드 bullet 삭제 / 수정
 - [ ] 다른 `index.md` 에서 `../<old>/index.md` 링크 검색·갱신
 
 ---

@@ -49,6 +49,13 @@ program
     .option('-d, --dry-run', 'preview changes without writing')
     .action(runUpdate);
 
+program
+    .command('uninstall')
+    .description('Remove harness from current project (preserves user artifacts by default)')
+    .option('--purge', 'also delete user artifacts (output/, memory/, harness-config.json)')
+    .option('-d, --dry-run', 'preview changes without writing')
+    .action(runUninstall);
+
 program.parse();
 
 async function runInit(opts) {
@@ -107,7 +114,7 @@ async function runInit(opts) {
     console.log();
     log.info(c.bold('Next steps'));
     console.log('  1. Restart Claude Code to pick up .claude/settings.json hooks');
-    console.log('  2. ' + c.cyan('Project conventions sample') + ' at ' + c.cyan('.harness/samples/CLAUDE.sample.md') + ' + ' + c.cyan('.harness/samples/docs/') + ' — strip `.sample.` and copy to project root if needed');
+    console.log('  2. ' + c.cyan('Project conventions starter') + ' at ' + c.cyan('.harness/samples/starter/') + ' — strip `.sample.` and copy to project root if needed');
     console.log('  3. Add the routing block to CLAUDE.md — the sample already includes it under "## 플러그인 설정"');
     console.log('  4. Try ' + c.cyan('"user 도메인 생성"') + ' in Claude Code');
 }
@@ -225,6 +232,210 @@ function deepMergePreservingUser(skel, user) {
         }
     }
     return result;
+}
+
+// ─── uninstall command ─────────────────────────────────────────────────────
+async function runUninstall(opts) {
+    const cwd = process.cwd();
+    const { purge = false, dryRun = false } = opts;
+
+    log.info(c.bold(`Uninstalling harness from ${cwd}`));
+    if (dryRun) log.warn('dry-run mode — no files will be modified');
+    if (purge) log.warn(c.yellow('--purge: user artifacts (output/, memory/, harness-config.json) will also be deleted'));
+
+    const harnessDir = path.join(cwd, '.harness');
+    if (!(await fs.pathExists(harnessDir))) {
+        log.error('No .harness/ found. Nothing to uninstall.');
+        process.exit(1);
+    }
+
+    const stats = {removed: 0, kept: 0};
+
+    // 1. .harness/
+    log.info('\n[1/5] Cleaning .harness/...');
+    if (purge) {
+        if (!dryRun) await fs.remove(harnessDir);
+        log.ok('.harness/ (fully removed)');
+        stats.removed++;
+    } else {
+        const pluginOwned = ['docs', 'hooks', 'templates', 'validators', 'samples', 'README.md'];
+        for (const item of pluginOwned) {
+            const p = path.join(harnessDir, item);
+            if (!(await fs.pathExists(p))) continue;
+            if (!dryRun) await fs.remove(p);
+            log.ok(`.harness/${item}`);
+            stats.removed++;
+        }
+        for (const item of ['output', 'memory', 'harness-config.json']) {
+            if (await fs.pathExists(path.join(harnessDir, item))) {
+                log.skip(`.harness/${item} (preserved)`);
+                stats.kept++;
+            }
+        }
+    }
+
+    // 2. .claude/settings.json
+    log.info('\n[2/5] Cleaning .claude/settings.json...');
+    await removeClaudeSettings(cwd, {dryRun, stats});
+
+    // 3. .husky/pre-commit
+    log.info('\n[3/5] Cleaning .husky/pre-commit...');
+    await removeHuskyBlock(cwd, {dryRun, stats});
+
+    // 4. .gitignore
+    log.info('\n[4/5] Cleaning .gitignore...');
+    await removeGitignoreEntries(cwd, {dryRun, stats});
+
+    // 5. devDependency
+    log.info('\n[5/5] Removing devDependency...');
+    if (!dryRun) {
+        try {
+            await execa('npm', ['uninstall', PKG_NAME], {cwd, stdio: 'inherit'});
+            log.ok(`${PKG_NAME} removed from devDependencies`);
+        } catch (err) {
+            log.warn(`npm uninstall failed: ${err.message}`);
+            log.warn(`Run 'npm uninstall ${PKG_NAME}' manually if needed.`);
+        }
+    }
+
+    // Summary
+    console.log();
+    log.info(c.bold('Uninstalled'));
+    console.log(`  removed: ${c.red(stats.removed)}`);
+    console.log(`  kept:    ${c.gray(stats.kept)}`);
+    if (!purge && stats.kept > 0) {
+        console.log();
+        log.info('User artifacts preserved in ' + c.cyan('.harness/') + ' — use ' + c.cyan('--purge') + ' to also delete them');
+    }
+}
+
+async function removeClaudeSettings(cwd, {dryRun, stats}) {
+    const partialPath = path.join(SKELETON_DIR, 'claude-settings.partial.json');
+    const partial = await fs.readJson(partialPath);
+    delete partial._comment;
+
+    const destPath = path.join(cwd, '.claude', 'settings.json');
+    if (!(await fs.pathExists(destPath))) {
+        log.skip('.claude/settings.json (not present)');
+        return;
+    }
+
+    let target;
+    try {
+        target = await fs.readJson(destPath);
+    } catch {
+        log.warn('.claude/settings.json is not valid JSON, skipping');
+        return;
+    }
+
+    let changed = false;
+
+    // Remove matching hooks
+    for (const srcEntry of partial.hooks?.PostToolUse ?? []) {
+        const matcherEntry = target.hooks?.PostToolUse?.find((e) => e.matcher === srcEntry.matcher);
+        if (!matcherEntry) continue;
+        for (const srcHook of srcEntry.hooks ?? []) {
+            const idx = matcherEntry.hooks?.findIndex((h) => h.type === srcHook.type && h.command === srcHook.command) ?? -1;
+            if (idx >= 0) {
+                matcherEntry.hooks.splice(idx, 1);
+                changed = true;
+            }
+        }
+        if (matcherEntry.hooks?.length === 0) {
+            const idx = target.hooks.PostToolUse.indexOf(matcherEntry);
+            if (idx >= 0) target.hooks.PostToolUse.splice(idx, 1);
+        }
+    }
+    if (target.hooks?.PostToolUse?.length === 0) delete target.hooks.PostToolUse;
+    if (target.hooks && Object.keys(target.hooks).length === 0) delete target.hooks;
+
+    // Remove matching permissions
+    for (const rule of partial.permissions?.allow ?? []) {
+        const idx = target.permissions?.allow?.indexOf(rule) ?? -1;
+        if (idx >= 0) {
+            target.permissions.allow.splice(idx, 1);
+            changed = true;
+        }
+    }
+    if (target.permissions?.allow?.length === 0) delete target.permissions.allow;
+    if (target.permissions && Object.keys(target.permissions).length === 0) delete target.permissions;
+
+    if (!changed) {
+        log.skip('.claude/settings.json (no harness entries found)');
+        return;
+    }
+
+    if (!dryRun) await fs.writeJson(destPath, target, {spaces: 2});
+    log.ok('.claude/settings.json (harness entries removed)');
+    stats.removed++;
+}
+
+async function removeHuskyBlock(cwd, {dryRun, stats}) {
+    const destPath = path.join(cwd, '.husky', 'pre-commit');
+    if (!(await fs.pathExists(destPath))) {
+        log.skip('.husky/pre-commit (not present)');
+        return;
+    }
+    const content = await fs.readFile(destPath, 'utf-8');
+    if (!content.includes(HARNESS_BLOCK_START)) {
+        log.skip('.husky/pre-commit (no harness block)');
+        return;
+    }
+    const cleaned = content
+        .replace(new RegExp(`\\n?${HARNESS_BLOCK_START}[\\s\\S]*?${HARNESS_BLOCK_END}\\n?`, 'g'), '')
+        .replace(/\n{3,}/g, '\n\n')
+        .trim();
+
+    // If only shebang or fully empty → remove file
+    const onlyShebangOrEmpty = cleaned === '' ||
+        (/^#!/.test(cleaned) && cleaned.split('\n').slice(1).every((l) => l.trim() === ''));
+
+    if (onlyShebangOrEmpty) {
+        if (!dryRun) await fs.remove(destPath);
+        log.ok('.husky/pre-commit (removed — only harness block was present)');
+    } else {
+        if (!dryRun) await fs.writeFile(destPath, cleaned + '\n');
+        log.ok('.husky/pre-commit (harness block removed)');
+    }
+    stats.removed++;
+}
+
+async function removeGitignoreEntries(cwd, {dryRun, stats}) {
+    const skelPath = path.join(SKELETON_DIR, 'gitignore-entries.txt');
+    const entries = new Set(
+        (await fs.readFile(skelPath, 'utf-8'))
+            .split('\n')
+            .map((l) => l.trim())
+            .filter((l) => l && !l.startsWith('#'))
+    );
+
+    const destPath = path.join(cwd, '.gitignore');
+    if (!(await fs.pathExists(destPath))) {
+        log.skip('.gitignore (not present)');
+        return;
+    }
+    const content = await fs.readFile(destPath, 'utf-8');
+    const kept = [];
+    let removedAny = false;
+    for (const line of content.split('\n')) {
+        const trimmed = line.trim();
+        if (trimmed === '# nestjs-harness-plugin' || entries.has(trimmed)) {
+            removedAny = true;
+            continue;
+        }
+        kept.push(line);
+    }
+    // Collapse multiple trailing blank lines
+    while (kept.length > 0 && kept[kept.length - 1].trim() === '') kept.pop();
+    const cleaned = kept.join('\n') + (kept.length > 0 ? '\n' : '');
+
+    if (!removedAny) {
+        log.skip('.gitignore (no harness entries found)');
+        return;
+    }
+    if (!dryRun) await fs.writeFile(destPath, cleaned);
+    log.ok('.gitignore (harness entries removed)');
+    stats.removed++;
 }
 
 // ─── Step 2: Copy .harness/ ─────────────────────────────────────────────────

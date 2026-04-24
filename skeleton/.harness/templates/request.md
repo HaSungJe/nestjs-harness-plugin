@@ -1,3 +1,4 @@
+<!-- 실제 작성 예시: .harness/samples/workflow/request.md -->
 ---
 # 예: "회원가입" — 이 기능이 무엇을 하는지 한 줄 요약
 feature_goal: "관리자용 회원가입"

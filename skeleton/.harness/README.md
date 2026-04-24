@@ -22,10 +22,13 @@
 │   └── report/<domain>/
 ├── validators/             # JSON Schema + 검증 스크립트
 ├── hooks/                  # Claude Code hook 스크립트 (자동 검증 · 테스트)
-├── samples/                # 참고용 샘플
-│   ├── workflow-*.md       #   실제 워크플로 결과물 예시
-│   ├── CLAUDE.sample.md    #   프로젝트 규칙 샘플 (루트에 복사 후 .sample. 제거)
-│   └── docs/               #   CLAUDE.sample.md 가 링크하는 상세 문서
+├── samples/                # 참고용 샘플 (두 종류로 분리)
+│   ├── workflow/           #   실제 워크플로 결과물 예시 (읽기 전용)
+│   │   ├── request.md / work.md / report.md
+│   │   └── step-*.jpg
+│   └── starter/            #   루트 복사용 스타터 (수정 전제)
+│       ├── CLAUDE.sample.md
+│       └── docs/
 └── memory/                 # 프로젝트 공유 메모리
 ```
 
@@ -44,7 +47,7 @@
 
 이 블록이 없으면 **명령어 기반 기능이 전혀 동작하지 않는다.** Claude 는 `.harness/docs/routing.md` 가 존재한다는 사실조차 모르기 때문.
 
-`.harness/samples/CLAUDE.sample.md` 에 **이미 라우팅 블록이 포함** 되어 있음:
+`.harness/samples/starter/CLAUDE.sample.md` 에 **이미 라우팅 블록이 포함** 되어 있음:
 - 루트에 `CLAUDE.md` 가 없다면 → `.sample.` 을 떼고 루트로 복사
 - 루트에 `CLAUDE.md` 가 이미 있다면 → 샘플에서 "## 플러그인 설정" 섹션만 발췌해 기존 파일 상단에 병합
 

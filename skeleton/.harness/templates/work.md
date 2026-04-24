@@ -1,9 +1,26 @@
+<!-- 실제 작성 예시: .harness/samples/workflow/work.md -->
 # Work Plan — {featureName}
 
 ## 기능 요약
 - **기능**: {feature_goal}
 - **API**: `{api_method} {api_path}`
 - **도메인**: {domain}
+
+---
+
+<!--
+  선택 섹션 — CLAUDE.md 규칙 중 이번 기능이 의존하는 인프라/데코레이터/모듈이
+  src/ 에 존재하지 않을 때만 작성. 없는 경우 이 섹션 전체를 삭제하고 다음으로 진행.
+-->
+
+## 사전 구현 필요 항목
+
+<!-- 예시 (없으면 섹션 삭제):
+- [ ] BullMQ Queue 인프라 — src/modules/queue/ 에 QueueModule + @UseQueue 데코레이터 + write-queue.registry 생성 (CLAUDE.md 'BullMQ' 섹션 기준)
+- [ ] 공용 Audit Util — src/common/utils/audit.ts 생성 (CLAUDE.md 'Service 계층 규칙' 중 util 분리 기준)
+-->
+
+> **⚠️ 이 섹션에 항목이 있으면** `"작업 시작"` 명령은 **모든 항목이 `[x]` 로 완료된 후에만** 진입 가능. 사용자가 별도 작업으로 해당 인프라를 구현 → 완료 후 각 항목 체크 → 그 다음에 본 기능 구현 진행.
 
 ---
 

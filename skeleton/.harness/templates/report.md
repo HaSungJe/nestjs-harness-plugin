@@ -1,3 +1,4 @@
+<!-- 실제 작성 예시: .harness/samples/workflow/report.md -->
 # 구현 완료 리포트 — {featureName}
 
 ## 요약

@@ -13,7 +13,7 @@
      - `<domain>.module.ts` — 빈 NestJS 모듈 클래스 (최소 `@Module({})` + export)
      - `<domain>.symbols.ts` — Repository DI Symbol 토큰 선언 영역 (빈 파일 OK)
      - `entities/.gitkeep` — 빈 Entity 폴더
-   - 생성 후 **사용자에게 안내**: "정식 프로젝트 규약을 설정하려면 `.harness/samples/CLAUDE.sample.md` 를 참고해 루트 `CLAUDE.md` 에 Architecture 섹션을 추가하세요."
+   - 생성 후 **사용자에게 안내**: "정식 프로젝트 규약을 설정하려면 `.harness/samples/starter/CLAUDE.sample.md` 를 참고해 루트 `CLAUDE.md` 에 Architecture 섹션을 추가하세요."
 4. `app.module.ts` 가 있으면 새 도메인 모듈 import + imports 배열 등록.
 
 ## 하네스의 책임 범위
