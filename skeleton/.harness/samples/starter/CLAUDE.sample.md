@@ -282,6 +282,14 @@ src/modules/queue/
 - 실패 지점 이후 mock 은 `.not.toHaveBeenCalled()` 로 미호출 확인
 - 목표: 테스트만 봐도 "어느 repository 에서 실패했고, 그 전까지 어떤 데이터가 흘렀는지" 추적 가능
 
+### 회귀 테스트 실패 처리
+
+기능 작업 마무리 단계에서 도메인 회귀 테스트(`npm test -- --testPathPatterns=src/api/v1/<domain>`) 실행 시 본 기능 외 spec 에서 실패가 나오면, 다음 중 **하나는 반드시** 수행한다. "기존 실패라 무관" 으로 떠넘기고 리포트 잔여 이슈로만 적는 것 금지.
+
+1. **원인 분석** — 어느 규칙·코드를 위반하는지 파악 (예: 위 "Error Handling" 섹션의 `validationErrors` 사용 조건 등 명시 규칙 위반인지 확인)
+2. **수정** — 명확한 규칙 위반이면 그 자리에서 수정. 특히 test 가 service 와 안 맞는 케이스(예: 실패 메시지가 `validationErrors[0]` undefined 패턴)는 즉시 수정
+3. **확인** — 모호하면 사용자에게 "이런 실패가 있는데 함께 처리할까요?" 라고 명시적으로 묻기
+
 ## Checklist
 
 - [ ] `validationErrors` key 일관 사용 (pipe + 수동 throw)
