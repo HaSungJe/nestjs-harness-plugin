@@ -155,8 +155,8 @@ src/
 
 ## Error Handling
 
-- **Repository**: 모든 메서드 반드시 try/catch. 실패 시 `throw new InternalServerErrorException({message: '~~에 실패했습니다. 관리자에게 문의해주세요.'})`
-- **Repository insert/update**: errno 1062 추가 처리 — `throw new BadRequestException({message: '중복된 {xx}가 존재합니다.'})`. else 절은 `InternalServerErrorException`
+- **Repository**: 모든 메서드 반드시 try/catch. 실패 시 `throw new InternalServerErrorException({message: '서버에서 오류가 발생했습니다. 관리자에게 문의해주세요.'})` — **모든 repository catch 통일 문구 사용** (도메인별 동사 금지). 이유: 범용 `update(where, entity)` 같은 메서드는 호출 맥락에 따라 의미가 달라져 도메인별 메시지가 모호해짐
+- **Repository insert/update**: errno 1062 추가 처리 — `throw new BadRequestException({message: '중복된 {xx}가 존재합니다.'})`. else 절은 위 통일 메시지로 `InternalServerErrorException`
 - errno 1062 확인: `error.errno === 1062 && error.sqlMessage.indexOf('constraint명') !== -1`
 - 범용 `update` 메서드 사용 시 errno 1062는 service에서 catch하여 처리 (repository가 제약 식별 불가)
 - `createValidationError` — **service에서만** 사용. repository 금지

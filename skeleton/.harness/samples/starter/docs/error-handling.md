@@ -11,6 +11,14 @@
 
 모든 repository 메서드는 반드시 try/catch로 감싸야 한다.
 
+### 일반 오류 메시지는 고정 문구로 통일
+
+```
+'서버에서 오류가 발생했습니다. 관리자에게 문의해주세요.'
+```
+
+이유: repository 메서드는 범용성(예: 단일 `update(where, entity)` 가 여러 service 흐름에서 호출됨)을 가져 도메인 별 동사("등록", "수정", "삭제") 가 모호해질 수 있다. 모든 repository catch 의 `InternalServerErrorException` 은 위 문구로 통일한다. errno 1062 등 구체 분기는 종전대로 별도 `BadRequestException` 으로 처리.
+
 ### find / count — 일반 오류만
 
 ```ts
@@ -18,7 +26,7 @@ async someMethod(...): Promise<...> {
     try {
         return await this.repository.find(...);
     } catch (error) {
-        throw new InternalServerErrorException({message: '~~에 실패했습니다. 관리자에게 문의해주세요.'});
+        throw new InternalServerErrorException({message: '서버에서 오류가 발생했습니다. 관리자에게 문의해주세요.'});
     }
 }
 ```
@@ -33,7 +41,7 @@ async insert(entity: XxxEntity): Promise<void> {
         if (error.errno === 1062 && error.sqlMessage.indexOf('Unique_Xxx_yyy') !== -1) {
             throw new BadRequestException({message: '중복된 {xx}가 존재합니다.'});
         }
-        throw new InternalServerErrorException({message: '~~에 실패했습니다. 관리자에게 문의해주세요.'});
+        throw new InternalServerErrorException({message: '서버에서 오류가 발생했습니다. 관리자에게 문의해주세요.'});
     }
 }
 ```
