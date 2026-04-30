@@ -119,7 +119,10 @@ src/
   - 다른 기능의 DTO를 재사용하지 않는다. 모양이 같아도 파일별로 독립 정의
 - API route: `/api/v1/<domain>/...`
 - Path param: snake_case (`visit_round_id`), 전 레이어 통일
-- **`@Param()` DTO 필수** — `@Param('key')` 방식 금지
+- **컨트롤러 입력 파라미터는 `any` 금지, 반드시 DTO 타입으로 수신** — `@Body() / @Query() / @Param()` 모두 동일. Swagger 자동 반영의 전제이므로 예외 없음
+  - `@Body() dto: XxxDto`
+  - `@Query() query: XxxQueryDto` (`extends PaginationDto` 인 경우에도 마찬가지) — 인스턴스 메서드/생성자 로직이 필요하면 controller 내부에서 `const dto = new XxxQueryDto(query);` 로 재인스턴스화 후 service 에 전달
+  - `@Param() param: XxxParamDto` — `@Param('key')` 방식 금지
 - **컨트롤러 메서드 파라미터 한 줄** — 멀티라인 금지
 - **validation error key**: 항상 `validationErrors`
 - **컨트롤러 경로 슬래시 규칙**: `@Controller`와 메서드 데코레이터 모두 앞에 `/` 필수
