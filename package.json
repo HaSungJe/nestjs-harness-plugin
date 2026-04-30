@@ -1,6 +1,6 @@
 {
   "name": "nestjs-harness-plugin",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "type": "module",
   "description": "Drop-in harness for NestJS — structures AI-assisted feature development via request/work specs",
   "bin": {
@@ -13,7 +13,8 @@
     "LICENSE"
   ],
   "scripts": {
-    "test": "echo \"No tests yet\" && exit 0"
+    "test": "echo \"No tests yet\" && exit 0",
+    "dev:sync": "node -e \"const fs=require('fs-extra');const path=require('path');const src='skeleton/.claude/commands';const dst='.claude/commands';fs.removeSync(dst);fs.ensureDirSync(dst);for(const f of fs.readdirSync(src)){fs.copySync(path.join(src,f),path.join(dst,f))}console.log('[dev:sync] '+fs.readdirSync(dst).length+' slash commands copied to .claude/commands/ (gitignored)');\""
   },
   "keywords": [
     "nestjs",

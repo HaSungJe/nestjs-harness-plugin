@@ -6,7 +6,7 @@
 - `find`/`findOne`/`findAndCount` 시 `loadRelationIds: true` 필수 (`@ManyToOne` FK 컬럼 undefined 방지)
 - WHERE/ORDER BY 조건은 메서드 내부 인라인 작성 — `applyFilters()` 같은 private 헬퍼 분리 금지
 - `@Query()` 값은 모두 string — 타입 변환·기본값 처리는 DTO constructor에서, 컨트롤러는 `new XxxDto(query)` 생성 후 전달
-- Pagination은 검색 개수(`count`)로 생성. 전체 개수(`totalCount`)로 생성 금지
+- Pagination은 검색 개수(`count`)로 생성. 전체 개수(`total_count`)로 생성 금지
 - 개수 조회 메서드는 하나(getXxxCount)만. `null` 전달 → 전체 개수, `dto` 전달 → 검색 개수
 - Path param: `@Param('key')` 방식 금지. DTO 클래스(`XxxParamDto`)로 수신, snake_case로 전 레이어 통일
 
@@ -76,18 +76,18 @@ async getVisitRoundList(@Query() query: VisitRoundListDto): Promise<VisitRoundLi
 
 | 단계 | 설명 | 비고 |
 |------|------|------|
-| 1. totalCount | 검색조건 없이 전체 수 | 응답 `totalCount` 필드 |
+| 1. total_count | 검색조건 없이 전체 수 | 응답 `total_count` 필드 |
 | 2. count | 검색조건 적용 후 개수 | Pagination 생성에 사용 |
 | 3. Pagination 생성 | 2번 count로 생성 | — |
 | 4. 목록 조회 | limit / offset 적용 | — |
 
 ```ts
-const totalCount = await this.repository.getVisitRoundCount(null);
+const total_count = await this.repository.getVisitRoundCount(null);
 const count = await this.repository.getVisitRoundCount(dto);
-const pagination = new Pagination({totalCount: count, page: dto.page, size: dto.size, pageSize: dto.pageSize, all_search_yn: dto.all_search_yn});
+const pagination = new Pagination({total_count: count, page: dto.page, size: dto.size, page_size: dto.page_size, all_search_yn: dto.all_search_yn});
 const entities = await this.repository.getVisitRoundList(dto, pagination.limit, pagination.offset);
 
-return {list, totalCount, pagination: pagination.getPagination()};
+return {list, total_count, pagination: pagination.getPagination()};
 ```
 
 ### Path Parameter DTO 예제

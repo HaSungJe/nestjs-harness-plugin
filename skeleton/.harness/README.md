@@ -2,8 +2,10 @@
 
 `nestjs-harness-plugin` 이 이 프로젝트에 설치해둔 하네스의 **구조와 동작 원리**를 설명한다. 명령 자체는 플러그인이 제공 — 사용자는 두 가지 방식 중 하나로 트리거:
 
-- **한국어 키워드** — `"xxx 기능 생성"`, `"xxx 작업 시작"`, `"커밋해줘"`, `"푸쉬해줘"` 같은 자연어 (CLAUDE.md 의 라우팅 블록 필요)
+- **한국어 키워드** — `"xxx 기능 생성"`, `"작업 시작"` (또는 `"xxx 작업 시작"`), `"커밋해줘"`, `"푸쉬해줘"` 같은 자연어 (CLAUDE.md 의 라우팅 블록 필요)
 - **슬래시 커맨드** — `/feature-plan`, `/feature-implement`, `/git-commit`, `/git-push` 등 (Claude Code 환경, 라우팅 블록과 무관하게 동작)
+
+> **구현 명령 통합**: 신규 기획(`work.md`) 과 변경 기획(`change-*.md`) 의 구현은 **모두 `/feature-implement` (또는 `작업 시작`)** 한 명령으로 진입한다. 모드는 인자·파일 상태로 자동 판별 — 인자를 생략하면 `.harness/output/` 의 미구현 플랜을 자동 탐색.
 
 ---
 
@@ -14,12 +16,11 @@
 ├── harness-config.json     # 프로젝트별 설정 (test 경로 · 필수 섹션 등)
 ├── README.md               # (이 파일)
 ├── docs/                   # 명령별 실행 규칙 — 폴더명이 슬래시 커맨드 이름과 1:1 매칭
-│   ├── routing.md          # 키워드/슬래시 ↔ 상세 문서 매핑 인덱스 (4섹션)
+│   ├── routing.md          # 키워드/슬래시 ↔ 상세 문서 매핑 인덱스 (5섹션)
 │   ├── domain-create/      # /domain-create
 │   ├── feature-plan/       # /feature-plan        — 신규 기능 기획
-│   ├── feature-implement/  # /feature-implement   — 신규 기능 구현
-│   ├── feature-modify-plan/      # /feature-modify-plan      — 기능 변경요청
-│   ├── feature-modify-implement/ # /feature-modify-implement — 기능 수정 구현
+│   ├── feature-modify-plan/# /feature-modify-plan — 기능 변경 기획
+│   ├── feature-implement/  # /feature-implement   — 구현 (신규/수정 자동 라우팅)
 │   ├── git-commit/         # /git-commit
 │   └── git-push/           # /git-push
 ├── templates/              # 생성물 양식 (request · work · change · report)
@@ -46,7 +47,7 @@
 | --- | --- | --- |
 | 트리거 (한국어) | 프로젝트 루트 `CLAUDE.md` 의 "명령어 라우팅" 블록 | 어떤 키워드를 명령으로 볼지 |
 | 트리거 (슬래시) | `.claude/commands/<name>.md` | `/<name>` 입력 시 본문이 프롬프트로 로드 |
-| 매핑 인덱스 | `docs/routing.md` | 키워드/슬래시 → 상세 문서 매핑 (4섹션: 도메인 / 기능 생성 / 기능 수정 / 배포) |
+| 매핑 인덱스 | `docs/routing.md` | 키워드/슬래시 → 상세 문서 매핑 (5섹션: 도메인 / 기능 신규 기획 / 기능 변경 기획 / 기능 구현 / 배포) |
 | 실행 규칙 | `docs/<command>/index.md` | 실제 명령 처리 절차 — 두 진입점 모두 결국 이 파일을 읽음 |
 | 서브 규칙 | `docs/<command>/<sub-rule>.md` | 단계 내 세부 규칙 (선택) — 예: `feature-modify-plan/change-file.md` |
 

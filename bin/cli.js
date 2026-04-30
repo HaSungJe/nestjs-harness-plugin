@@ -521,6 +521,14 @@ async function copyClaudeCommands(cwd, {force, dryRun, stats}) {
     }
 }
 
+// Plugin-owned commands removed in past versions but may still linger in
+// existing user installs. Listed by relative path under .claude/commands/.
+// Cleaned up on every wipePluginOwnedCommands() call so `update` / `uninstall`
+// drop them naturally.
+const LEGACY_PLUGIN_COMMANDS = [
+    'feature-modify-implement.md', // 0.4.0: merged into /feature-implement (auto new/modify routing)
+];
+
 // Remove only commands that this plugin owns (by filename match with skeleton).
 // User-added commands in .claude/commands/ stay untouched.
 async function wipePluginOwnedCommands(cwd, {dryRun, stats}) {
@@ -530,7 +538,9 @@ async function wipePluginOwnedCommands(cwd, {dryRun, stats}) {
     const destDir = path.join(cwd, '.claude', 'commands');
     if (!(await fs.pathExists(destDir))) return;
 
-    const ownedFiles = (await walk(srcDir)).map((f) => path.relative(srcDir, f).split(path.sep).join('/'));
+    const currentOwned = (await walk(srcDir)).map((f) => path.relative(srcDir, f).split(path.sep).join('/'));
+    const ownedFiles = [...currentOwned, ...LEGACY_PLUGIN_COMMANDS];
+
     for (const rel of ownedFiles) {
         const dest = path.join(destDir, rel);
         if (!(await fs.pathExists(dest))) continue;

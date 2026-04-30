@@ -1,5 +1,38 @@
 # Changelog
 
+## [0.4.0] - 2026-04-30
+
+### Changed (Breaking)
+- **`/feature-implement` 통합 — 신규/수정 자동 라우팅** — 이전엔 신규 구현은 `/feature-implement`, 수정 구현은 `/feature-modify-implement` 둘로 분리되어 있었으나, **한 명령으로 통합**. 모드는 인자·파일 상태로 자동 판별:
+  - 인자 있음 (`/feature-implement <featureName>`) — 해당 기능 디렉터리 안에서 미추기 `change-*.md` 가 있으면 **수정 모드**, 없고 짝 report 없는 `work.md` 만 있으면 **신규 모드**
+  - 인자 없음 (`/feature-implement`) — `.harness/output/` 전체 스캔 → 미구현 플랜 후보 수집 → 1개면 자동 진행, 2개 이상이면 사용자에게 선택 요청, 0개면 중단·안내
+- **제거된 진입점**:
+  - 슬래시 `/feature-modify-implement` 삭제
+  - 한국어 키워드 `수정 시작` 삭제 (이제 `작업 시작` 한 키워드가 신규/수정 양쪽 처리)
+- **제거된 폴더**: `.harness/docs/feature-modify-implement/` — 내용은 `feature-implement/index.md` 의 "수정 모드" 섹션으로 이전·통합
+
+### Added
+- `feature-implement/index.md` — **⓪ 단계 (인자 파싱 + 모드 자동 결정)** 섹션 신설. 인자 유무·파일 상태 매트릭스에 따른 분기 명세
+- 인자 없는 호출 시 미구현 후보가 N개일 때 사용자 선택 UX 명시 (자동 일괄 처리하지 않음 — 한 번에 1건씩이 안전)
+- **브랜치 분기 질의 자동 생략 규칙** — `/feature-plan` 과 `/feature-modify-plan` 의 브랜치 분기 시점에, 현재 브랜치가 `.harness/.auto-branch-state.json` 의 키로 등록되어 있으면 (= 이전 단계에서 자동 생성된 feature 브랜치) **질의 생략 후 그대로 이어감**. 한 사이클에 다중 work / 다중 change 를 쌓을 때 매번 "새 브랜치 만들까요?" 가 뜨지 않음. 푸쉬 직후엔 state 항목이 삭제되므로 새 사이클 시작 시점에선 다시 질의 (의도)
+- CLI `LEGACY_PLUGIN_COMMANDS` 목록 — `wipePluginOwnedCommands()` 가 이전 버전이 설치한 슬래시 파일을 `update` / `uninstall` 시점에 자동 정리. 0.3.x → 0.4.0 마이그레이션 시 사용자 `.claude/commands/feature-modify-implement.md` 가 자연스럽게 제거됨
+- `npm run dev:sync` script — 메인테이너가 이 dev repo 에서 직접 `/feature-implement` 같은 슬래시를 Claude Code 로 테스트할 수 있게 `skeleton/.claude/commands/` → `.claude/commands/` 복사. 사본은 `.gitignore` 처리. CONTRIBUTING.md 에 사용법 섹션 신설
+
+### Changed
+- `routing.md` — 4섹션 → **5섹션** 재구성: `도메인 생성` / `기능 — 신규 기획` / `기능 — 변경 기획` / **`기능 — 구현 (신규·수정 자동 라우팅)`** / `배포`. 구현 섹션은 신규·수정 두 갈래 기획에서 모두 같은 명령으로 수렴함을 명시
+- `feature-modify-plan/index.md` — "다음 단계" 참조를 `feature-modify-implement` → `feature-implement` ("수정 모드" 섹션) 로 갱신. 단계 개요 다이어그램의 구현 단계 명칭도 "feature-modify-implement" → "feature-implement 의 수정 모드" 로 수정
+- README.md — 명령 일람 표 7행 → 6행 (구현 행 1개로 통합), 워크플로 표·전제 조건 표·설치 표 모두 새 구조 반영. 전제 조건 표는 신규/수정 모드 두 케이스를 한 셀에 병기하여 자동 라우팅 로직을 명시. 설치되는 슬래시 개수 7종 → 6종, uninstall 표 8종 → 7종
+- `skeleton/.harness/README.md` — 디렉터리 트리에서 `feature-modify-implement/` 행 제거, 폴더 7개 → 6개. 인트로에 "구현 명령 통합" 한 줄 노트 추가
+- `samples/starter/CLAUDE.sample.md` 라우팅 블록 — 한국어 키워드 7개 → 6개 (`수정 시작` 제거), 슬래시 bullet 도 6개로 정리. `작업 시작` 설명에 "신규/수정 자동 라우팅, 인자 생략 시 미구현 플랜 자동 탐색" 명시. 추가로 **"3) 워크플로 패턴 — 멀티 work 한 사이클 누적"** 한 단락 신설 — 0.4.0 의 두 동작 변화 (브랜치 사전 검사로 두 번째 호출부터 질의 생략 + 미구현 플랜 자동 탐색·1건씩 처리) 를 sample CLAUDE.md 본문에서 바로 인지할 수 있도록
+- 슬래시 표기 통일 — `/feature-implement [<featureName>]` (CLI convention 의 optional 표기) 가 일반 사용자에게 "featureName 이 필수처럼" 보이는 혼란을 줄이기 위해, 한국어 키워드의 두 형태 표기 패턴(`작업 시작` 또는 `<featureName> 작업 시작`) 과 미러링하여 **`/feature-implement` 또는 `/feature-implement <featureName>`** 으로 변경. 적용 위치: README 명령 일람 표 / `routing.md` / `CLAUDE.sample.md` / `feature-modify-plan/index.md` "다음 단계" 안내. (슬래시 frontmatter 의 `argument-hint` 는 표준 형식이라 그대로 유지)
+
+### Migration (0.3.x → 0.4.0)
+- 기존 사용자: `npx github:HaSungJe/nestjs-harness-plugin update` 1회 실행 권장
+  - `.harness/docs/feature-modify-implement/` 폴더는 `update` 시점에 `docs/` 전량 wipe + 재복사 정책으로 자동 제거됨
+  - `.claude/commands/feature-modify-implement.md` 슬래시 파일은 `LEGACY_PLUGIN_COMMANDS` 정리 로직으로 자동 제거
+  - 이전에 작성한 `change-*.md` 와 진행 중이던 작업은 그대로 유지 — 새 `/feature-implement` 가 자동으로 수정 모드로 진입
+- 사용자 측 변경 필요 사항: 없음 (한국어 키워드 `수정 시작` 을 직접 트리거 문구로 묶어둔 곳이 있다면 `작업 시작` 으로 교체)
+
 ## [0.3.0] - 2026-04-30
 
 ### Added

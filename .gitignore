@@ -23,6 +23,10 @@ Thumbs.db
 # Claude Code — 머신별 개인 설정
 .claude/settings.local.json
 
+# Dev sync — skeleton/.claude/commands/ 의 사본. `npm run dev:sync` 로 갱신.
+# 이 dev repo 에서 슬래시 커맨드를 실제로 테스트하기 위함. 실제 배포물은 skeleton/ 만.
+.claude/commands/
+
 # Build artifacts (none expected, but future-proof)
 dist/
 build/

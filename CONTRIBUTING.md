@@ -2,11 +2,27 @@
 
 플러그인 **메인테이너** 용 가이드. 사용자 프로젝트로 배포되지 않음.
 
+## Dev 환경 — 이 repo 에서 슬래시 커맨드 테스트하기
+
+이 repo (`nestjs-harness-plugin`) 의 `skeleton/.claude/commands/*.md` 는 **사용자 프로젝트로 복사되는 템플릿** 이라 이 dev repo 자체에는 슬래시가 등록 안 됨. Claude Code 에서 직접 `/feature-implement` 같은 명령을 테스트하려면:
+
+```bash
+npm run dev:sync
+```
+
+위 스크립트가 `skeleton/.claude/commands/` → `.claude/commands/` 로 복사 (전량 wipe 후 재복사). 사본은 `.gitignore` 처리되어 커밋되지 않음.
+
+> 슬래시 커맨드를 수정한 뒤 다시 테스트하려면 매번 `npm run dev:sync` 재실행. Claude Code 도 reload 필요할 수 있음.
+
+대안: 빈 디렉터리에서 `node bin/cli.js init` 실행해 정상 install 경로로 검증.
+
 ## 새 명령 추가
 
 각 명령은 **두 진입점** 을 가져야 한다 — 한국어 키워드 + 슬래시 커맨드. 둘은 동일한 `docs/<command>/index.md` 를 가리키므로 결과 동작은 같다. **5곳을 모두 갱신** 해야 사용자가 어느 경로로 들어와도 막히지 않는다.
 
-> **네이밍 규칙**: 슬래시 이름과 docs 폴더 이름을 **1:1 매칭** 시킨다. 예: `/feature-plan` ↔ `docs/feature-plan/`. 두 단계로 나뉘는 명령은 `-plan` / `-implement` 접미어로 분리 (`feature-modify-plan` / `feature-modify-implement`). git 관련은 `git-` 접두어 (`/git-commit`, `/git-push`).
+> **네이밍 규칙**: 슬래시 이름과 docs 폴더 이름을 **1:1 매칭** 시킨다. 예: `/feature-plan` ↔ `docs/feature-plan/`. 기획·구현이 분리되는 명령은 `-plan` / `-implement` 접미어로 명명. git 관련은 `git-` 접두어 (`/git-commit`, `/git-push`).
+>
+> **모드 통합 패턴**: 같은 후속 단계(예: 구현·테스트·리포트)를 여러 기획 줄기가 공유한다면, **단일 슬래시 + 자동 모드 라우팅** 으로 통합한다. 예: `/feature-implement` 가 신규(`work.md`) / 수정(`change-*.md`) 둘을 인자·파일 상태로 자동 판별. 사용자 인지 부담을 줄이고 명령 표면적을 작게 유지하기 위함.
 
 ### ① `skeleton/.harness/docs/<command>/index.md` 생성
 
@@ -55,7 +71,7 @@ argument-hint: <인자 형식 — 예: <featureName> 또는 (선택) ...>
 
 ### ③ `skeleton/.harness/docs/routing.md` 에 1행 추가
 
-현재 routing.md 는 4개 섹션으로 나뉨 — `## 도메인 생성` / `## 기능 생성` / `## 기능 수정` / `## 배포`. 적절한 섹션의 표에 한 행을 추가 (없으면 섹션 신설). **3컬럼 형식** 유지:
+현재 routing.md 는 5개 섹션으로 나뉨 — `## 도메인 생성` / `## 기능 — 신규 기획` / `## 기능 — 변경 기획` / `## 기능 — 구현 (신규·수정 자동 라우팅)` / `## 배포`. 적절한 섹션의 표에 한 행을 추가 (없으면 섹션 신설). **3컬럼 형식** 유지:
 
 ````markdown
 | `<자연어 트리거>` | `/<slash> <args>` | [<command>/index.md](./<command>/index.md) |
@@ -103,7 +119,7 @@ argument-hint: <인자 형식 — 예: <featureName> 또는 (선택) ...>
 
 ## 명령 제거 / 이름 변경
 
-새 구조에서 명령 변경 시 **6곳을 모두** 갱신:
+새 구조에서 명령 변경 시 **7곳을 모두** 갱신:
 
 - [ ] `skeleton/.harness/docs/<command>/` 폴더 삭제 또는 rename
 - [ ] `skeleton/.claude/commands/<command>.md` 슬래시 파일 삭제 또는 rename (폴더명과 매칭 유지)
